@@ -1,467 +1,451 @@
-import React, { useState } from 'react';
-import { 
-  Server, 
-  Network, 
-  Wrench, 
-  Zap, 
-  Activity, 
-  Code, 
-  Shield, 
-  ChevronRight, 
-  Terminal, 
-  Database,
-  Cpu,
-  FileJson,
-  Lock,
-  ArrowRightLeft,
-  CheckCircle2,
-  Info,
-  GitMerge,
-  ArrowRight,
-  User,
-  MessageSquare,
-  Globe,
-  Layers,
-  Image as ImageIcon,
-  ListOrdered,
-  Radio
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Architecture Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Custom Scrollbar for a polished look */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569; 
+    }
+    .deep-dive-content {
+      display: none;
+    }
+    .deep-dive-content.open {
+      display: block;
+    }
+    .chevron-icon {
+      transition: transform 0.2s;
+    }
+    .chevron-icon.open {
+      transform: rotate(90deg);
+    }
+    /* Simple fade in animation to replace React's animate-in */
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-slide {
+      animation: fadeInSlide 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-200 flex flex-col md:flex-row font-sans selection:bg-blue-500/30">
 
-// Reusable Code Block Component
-const CodeBlock = ({ language, code, title }) => (
-  <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
-    {title && (
-      <div className="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
-        <FileJson className="w-4 h-4 mr-2" />
-        {title}
-      </div>
-    )}
-    <div className="p-4 overflow-x-auto">
-      <pre className="text-sm font-mono text-slate-300">
-        <code>{code}</code>
-      </pre>
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-72 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col h-screen md:sticky top-0">
+    <div class="p-6 border-b border-slate-800">
+      <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent flex items-center">
+        <i data-lucide="cpu" class="w-6 h-6 mr-2 text-blue-400"></i>
+        MCP Explorer
+      </h1>
+      <p class="text-xs text-slate-500 mt-2">Model Context Protocol Guide</p>
     </div>
-  </div>
-);
-
-// Reusable Deep Dive Component
-const DeepDive = ({ title, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="mt-4 border border-blue-900/50 rounded-lg bg-blue-900/10 overflow-hidden">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between text-blue-400 hover:bg-blue-900/20 transition-colors"
-      >
-        <span className="font-semibold flex items-center text-sm">
-          <Info className="w-4 h-4 mr-2" />
-          Nth Level Deep Dive: {title}
-        </span>
-        <ChevronRight className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+    
+    <nav class="p-4 flex-1 overflow-y-auto space-y-1" id="nav-tabs">
+      <button onclick="switchTab('arch')" id="btn-arch" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="server" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> High-Level Architecture
       </button>
-      {isOpen && (
-        <div className="p-4 text-slate-300 text-sm border-t border-blue-900/50 space-y-4">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
+      <button onclick="switchTab('diagrams')" id="btn-diagrams" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="git-merge" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Interactive Diagrams
+      </button>
+      <button onclick="switchTab('transport')" id="btn-transport" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="network" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Transport Layer
+      </button>
+      <button onclick="switchTab('primitives')" id="btn-primitives" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="wrench" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Server Primitives
+      </button>
+      <button onclick="switchTab('client')" id="btn-client" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="zap" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Client Capabilities
+      </button>
+      <button onclick="switchTab('advanced')" id="btn-advanced" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="layers" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Advanced Mechanics
+      </button>
+      <button onclick="switchTab('lifecycle')" id="btn-lifecycle" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="activity" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> State & Lifecycle
+      </button>
+      <button onclick="switchTab('sample')" id="btn-sample" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="code" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Practical Samples
+      </button>
+      <button onclick="switchTab('security')" id="btn-security" class="w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+        <i data-lucide="shield" class="w-4 h-4 mr-3 text-slate-500 icon-nav"></i> Security & Trust
+      </button>
+    </nav>
+  </aside>
 
-// --- Sections ---
-
-const ArchitectureSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2">High-Level Architecture</h2>
-      <p className="text-slate-400">
-        MCP operates on a flipped client-server model tailored specifically for AI. It acts as the "USB-C of AI", standardizing how models connect to the outside world.
-      </p>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-blue-500 transition-colors">
-        <div className="flex items-center mb-4">
-          <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 mr-4">
-            <Cpu className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-semibold text-white">MCP Host</h3>
-        </div>
-        <p className="text-slate-300 text-sm">
-          The overarching AI application (e.g., Claude Desktop, Cursor IDE). It manages the UI, user intents, and orchestrates the AI model's generation process.
-        </p>
-      </div>
-
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-purple-500 transition-colors">
-        <div className="flex items-center mb-4">
-          <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 mr-4">
-            <ArrowRightLeft className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-semibold text-white">MCP Client</h3>
-        </div>
-        <p className="text-slate-300 text-sm">
-          Embedded within the Host. It manages 1:1 connections to servers, handles protocol negotiation, and translates LLM tool-calls into JSON-RPC requests.
-        </p>
-      </div>
-
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-emerald-500 transition-colors">
-        <div className="flex items-center mb-4">
-          <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 mr-4">
-            <Server className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-semibold text-white">MCP Server</h3>
-        </div>
-        <p className="text-slate-300 text-sm">
-          A lightweight, intermediary process. It exposes a standardized manifest of capabilities (Tools, Resources, Prompts) to the connected client.
-        </p>
-      </div>
-
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-orange-500 transition-colors">
-        <div className="flex items-center mb-4">
-          <div className="p-2 bg-orange-500/20 rounded-lg text-orange-400 mr-4">
-            <Database className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-semibold text-white">Data Source</h3>
-        </div>
-        <p className="text-slate-300 text-sm">
-          The actual backend system being accessed (PostgreSQL database, local filesystem, Slack API, GitHub webhooks, etc.).
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
-const DiagramSection = () => {
-  const [diagramType, setDiagramType] = useState('logical');
-
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 md:p-12 overflow-y-auto max-w-5xl w-full">
+    
+    <!-- SECTION: Architecture -->
+    <div id="sec-arch" class="hidden space-y-6 fade-in-slide content-section">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Architecture Diagrams</h2>
-        <p className="text-slate-400">
+        <h2 class="text-2xl font-bold text-white mb-2">High-Level Architecture</h2>
+        <p class="text-slate-400">
+          MCP operates on a flipped client-server model tailored specifically for AI. It acts as the "USB-C of AI", standardizing how models connect to the outside world.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-blue-500 transition-colors">
+          <div class="flex items-center mb-4">
+            <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400 mr-4">
+              <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">MCP Host</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            The overarching AI application (e.g., Claude Desktop, Cursor IDE). It manages the UI, user intents, and orchestrates the AI model's generation process.
+          </p>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-purple-500 transition-colors">
+          <div class="flex items-center mb-4">
+            <div class="p-2 bg-purple-500/20 rounded-lg text-purple-400 mr-4">
+              <i data-lucide="arrow-right-left" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">MCP Client</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            Embedded within the Host. It manages 1:1 connections to servers, handles protocol negotiation, and translates LLM tool-calls into JSON-RPC requests.
+          </p>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-emerald-500 transition-colors">
+          <div class="flex items-center mb-4">
+            <div class="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 mr-4">
+              <i data-lucide="server" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">MCP Server</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            A lightweight, intermediary process. It exposes a standardized manifest of capabilities (Tools, Resources, Prompts) to the connected client.
+          </p>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-orange-500 transition-colors">
+          <div class="flex items-center mb-4">
+            <div class="p-2 bg-orange-500/20 rounded-lg text-orange-400 mr-4">
+              <i data-lucide="database" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">Data Source</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            The actual backend system being accessed (PostgreSQL database, local filesystem, Slack API, GitHub webhooks, etc.).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: Diagrams -->
+    <div id="sec-diagrams" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">Architecture Diagrams</h2>
+        <p class="text-slate-400">
           Visual breakdowns of how components interact and how data flows through the Model Context Protocol.
         </p>
       </div>
 
-      <div className="flex space-x-2 border-b border-slate-700 mb-6">
-        <button
-          onClick={() => setDiagramType('logical')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-            diagramType === 'logical' 
-              ? 'border-blue-500 text-blue-400' 
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
+      <div class="flex space-x-2 border-b border-slate-700 mb-6">
+        <button onclick="switchDiagram('logical')" id="btn-diag-logical" class="px-4 py-2 text-sm font-medium transition-colors border-b-2 border-blue-500 text-blue-400">
           Logical Topology
         </button>
-        <button
-          onClick={() => setDiagramType('technical')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-            diagramType === 'technical' 
-              ? 'border-purple-500 text-purple-400' 
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
+        <button onclick="switchDiagram('technical')" id="btn-diag-technical" class="px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-200">
           Technical Sequence Flow
         </button>
       </div>
 
-      {diagramType === 'logical' && (
-        <div className="bg-slate-900 border border-slate-700 p-8 rounded-xl overflow-x-auto shadow-2xl relative">
-          <div className="min-w-[800px] flex items-stretch justify-between space-x-4">
-            
-            {/* User & UI Box */}
-            <div className="flex flex-col items-center justify-center w-48 space-y-4">
-              <div className="bg-slate-800 border border-slate-600 p-4 rounded-lg w-full text-center shadow-lg">
-                <User className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <div className="text-sm font-bold text-white">End User</div>
-                <div className="text-xs text-slate-400 mt-1">Prompt / Chat UI</div>
-              </div>
+      <!-- Logical Diagram -->
+      <div id="diag-logical" class="bg-slate-900 border border-slate-700 p-8 rounded-xl overflow-x-auto shadow-2xl relative block">
+        <div class="min-w-[800px] flex items-stretch justify-between space-x-4">
+          
+          <!-- User Box -->
+          <div class="flex flex-col items-center justify-center w-48 space-y-4">
+            <div class="bg-slate-800 border border-slate-600 p-4 rounded-lg w-full text-center shadow-lg">
+              <i data-lucide="user" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+              <div class="text-sm font-bold text-white">End User</div>
+              <div class="text-xs text-slate-400 mt-1">Prompt / Chat UI</div>
             </div>
-
-            <div className="flex items-center justify-center text-slate-500">
-              <ArrowRight className="w-6 h-6" />
-            </div>
-
-            {/* AI Host Box */}
-            <div className="bg-blue-900/20 border-2 border-blue-500/50 p-6 rounded-xl flex-1 relative shadow-[0_0_30px_rgba(59,130,246,0.1)]">
-              <div className="absolute -top-3 left-6 bg-slate-900 px-2 text-xs font-bold text-blue-400 tracking-wider">AI HOST (e.g., Claude Desktop)</div>
-              <div className="space-y-4">
-                <div className="bg-slate-800 border border-slate-600 p-3 rounded text-center">
-                  <div className="text-sm font-bold text-white flex justify-center items-center">
-                    <MessageSquare className="w-4 h-4 mr-2 text-blue-400" />
-                    Context Window
-                  </div>
-                </div>
-                <div className="flex space-x-4">
-                  <div className="bg-slate-800 border border-slate-600 p-4 rounded flex-1 text-center">
-                    <Cpu className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
-                    <div className="text-sm font-bold text-white">LLM</div>
-                  </div>
-                  <div className="flex items-center justify-center text-slate-500">
-                    <ArrowRightLeft className="w-4 h-4" />
-                  </div>
-                  <div className="bg-purple-900/40 border border-purple-500 p-4 rounded flex-1 text-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                    <Zap className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                    <div className="text-sm font-bold text-white">MCP Client</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center justify-center px-2">
-              <div className="text-xs font-mono text-slate-400 mb-1">JSON-RPC</div>
-              <div className="flex items-center space-x-1 w-full justify-center">
-                <div className="h-[2px] w-8 bg-emerald-500/50"></div>
-                <ArrowRightLeft className="w-6 h-6 text-emerald-400" />
-                <div className="h-[2px] w-8 bg-emerald-500/50"></div>
-              </div>
-              <div className="text-xs font-mono text-slate-400 mt-1">stdio / SSE</div>
-            </div>
-
-            {/* MCP Server Box */}
-            <div className="bg-emerald-900/20 border-2 border-emerald-500/50 p-6 rounded-xl flex-1 relative shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-              <div className="absolute -top-3 left-6 bg-slate-900 px-2 text-xs font-bold text-emerald-400 tracking-wider">MCP SERVER</div>
-              <div className="grid grid-cols-1 gap-3 h-full">
-                <div className="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
-                  <Wrench className="w-4 h-4 mr-2 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Tools (Actions)</span>
-                </div>
-                <div className="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
-                  <FileJson className="w-4 h-4 mr-2 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Resources (Data)</span>
-                </div>
-                <div className="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
-                  <Terminal className="w-4 h-4 mr-2 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Prompts (Templates)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center text-slate-500">
-              <ArrowRight className="w-6 h-6" />
-            </div>
-
-            {/* Data Source Box */}
-            <div className="flex flex-col items-center justify-center w-48 space-y-3">
-              <div className="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
-                <Database className="w-5 h-5 text-orange-400 mr-3" />
-                <div className="text-xs font-bold text-white">Local Database</div>
-              </div>
-              <div className="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
-                <Globe className="w-5 h-5 text-sky-400 mr-3" />
-                <div className="text-xs font-bold text-white">External API</div>
-              </div>
-              <div className="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
-                <FileJson className="w-5 h-5 text-yellow-400 mr-3" />
-                <div className="text-xs font-bold text-white">Local Files</div>
-              </div>
-            </div>
-
           </div>
-          <p className="text-center text-xs text-slate-500 mt-8">
-            The MCP Client and Server handle all translation. The LLM only needs to understand standard JSON schemas.
-          </p>
-        </div>
-      )}
 
-      {diagramType === 'technical' && (
-        <div className="bg-slate-900 border border-slate-700 p-6 rounded-xl overflow-x-auto shadow-2xl">
-          <div className="min-w-[700px]">
-            {/* Table Headers */}
-            <div className="grid grid-cols-4 gap-4 mb-4 text-center border-b border-slate-700 pb-4">
-              <div className="font-bold text-blue-400 text-sm">AI Host (LLM Context)</div>
-              <div className="font-bold text-purple-400 text-sm">MCP Client</div>
-              <div className="font-bold text-emerald-400 text-sm">MCP Server</div>
-              <div className="font-bold text-orange-400 text-sm">Backend System</div>
+          <div class="flex items-center justify-center text-slate-500">
+            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+          </div>
+
+          <!-- AI Host Box -->
+          <div class="bg-blue-900/20 border-2 border-blue-500/50 p-6 rounded-xl flex-1 relative shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+            <div class="absolute -top-3 left-6 bg-slate-900 px-2 text-xs font-bold text-blue-400 tracking-wider">AI HOST (e.g., Claude Desktop)</div>
+            <div class="space-y-4">
+              <div class="bg-slate-800 border border-slate-600 p-3 rounded text-center">
+                <div class="text-sm font-bold text-white flex justify-center items-center">
+                  <i data-lucide="message-square" class="w-4 h-4 mr-2 text-blue-400"></i>
+                  Context Window
+                </div>
+              </div>
+              <div class="flex space-x-4">
+                <div class="bg-slate-800 border border-slate-600 p-4 rounded flex-1 text-center">
+                  <i data-lucide="cpu" class="w-6 h-6 text-indigo-400 mx-auto mb-2"></i>
+                  <div class="text-sm font-bold text-white">LLM</div>
+                </div>
+                <div class="flex items-center justify-center text-slate-500">
+                  <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
+                </div>
+                <div class="bg-purple-900/40 border border-purple-500 p-4 rounded flex-1 text-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                  <i data-lucide="zap" class="w-6 h-6 text-purple-400 mx-auto mb-2"></i>
+                  <div class="text-sm font-bold text-white">MCP Client</div>
+                </div>
+              </div>
             </div>
+          </div>
 
-            {/* Sequence Steps */}
-            <div className="space-y-6 relative">
-              {/* Step 1: Handshake */}
-              <div className="grid grid-cols-4 gap-4 items-center">
-                <div></div>
-                <div className="col-span-2 relative">
-                  <div className="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
-                  <div className="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md">
-                    <span className="font-mono text-emerald-400">initialize()</span> request
-                  </div>
-                </div>
-                <div></div>
+          <!-- Network Connection -->
+          <div class="flex flex-col items-center justify-center px-2">
+            <div class="text-xs font-mono text-slate-400 mb-1">JSON-RPC</div>
+            <div class="flex items-center space-x-1 w-full justify-center">
+              <div class="h-[2px] w-8 bg-emerald-500/50"></div>
+              <i data-lucide="arrow-right-left" class="w-6 h-6 text-emerald-400"></i>
+              <div class="h-[2px] w-8 bg-emerald-500/50"></div>
+            </div>
+            <div class="text-xs font-mono text-slate-400 mt-1">stdio / SSE</div>
+          </div>
+
+          <!-- MCP Server Box -->
+          <div class="bg-emerald-900/20 border-2 border-emerald-500/50 p-6 rounded-xl flex-1 relative shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+            <div class="absolute -top-3 left-6 bg-slate-900 px-2 text-xs font-bold text-emerald-400 tracking-wider">MCP SERVER</div>
+            <div class="grid grid-cols-1 gap-3 h-full">
+              <div class="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
+                <i data-lucide="wrench" class="w-4 h-4 mr-2 text-emerald-400"></i>
+                <span class="text-xs font-bold text-white">Tools (Actions)</span>
               </div>
-
-              {/* Step 2: Server responds with tools */}
-              <div className="grid grid-cols-4 gap-4 items-center">
-                <div className="col-span-2 relative">
-                  <div className="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
-                  <div className="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
-                    <ArrowRight className="w-4 h-4 text-blue-400 rotate-180" />
-                    <span className="text-slate-300">Inject Tools into Context</span>
-                  </div>
-                </div>
-                <div className="col-span-1 relative">
-                   <div className="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
-                   <div className="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center shadow-md flex justify-between items-center px-2">
-                    <ArrowRight className="w-4 h-4 text-emerald-400 rotate-180" />
-                    <span className="font-mono text-emerald-400">tools/list</span>
-                  </div>
-                </div>
-                <div></div>
+              <div class="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
+                <i data-lucide="file-json" class="w-4 h-4 mr-2 text-emerald-400"></i>
+                <span class="text-xs font-bold text-white">Resources (Data)</span>
               </div>
-
-              {/* Spacer */}
-              <div className="h-4 border-b border-dashed border-slate-700 mx-10 text-center relative text-xs text-slate-500">
-                <span className="bg-slate-900 px-2 absolute -top-2 left-1/2 transform -translate-x-1/2">User asks a question</span>
+              <div class="bg-slate-800 border border-slate-600 p-2 rounded text-center flex items-center justify-center">
+                <i data-lucide="terminal" class="w-4 h-4 mr-2 text-emerald-400"></i>
+                <span class="text-xs font-bold text-white">Prompts (Templates)</span>
               </div>
+            </div>
+          </div>
 
-              {/* Step 3: LLM Predicts Tool */}
-              <div className="grid grid-cols-4 gap-4 items-center mt-8">
-                <div className="col-span-1">
-                   <div className="bg-blue-900/30 border border-blue-500/50 text-xs p-3 rounded text-center shadow-md">
-                    LLM predicts:<br/>
-                    <code className="text-blue-300">call_tool("get_weather")</code>
-                  </div>
-                </div>
-                <div className="col-span-2 relative">
-                  <div className="h-[1px] w-full bg-emerald-500/30 absolute top-1/2 -z-10"></div>
-                  <div className="bg-slate-800 border border-emerald-500/50 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
-                    <span className="font-mono text-emerald-400">tools/call {"{city: 'NY'}"}</span>
-                    <ArrowRight className="w-4 h-4 text-emerald-400" />
-                  </div>
-                </div>
-                <div></div>
-              </div>
+          <div class="flex items-center justify-center text-slate-500">
+            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+          </div>
 
-              {/* Step 4: Server executes */}
-              <div className="grid grid-cols-4 gap-4 items-center">
-                <div></div>
-                <div></div>
-                <div className="col-span-2 relative">
-                  <div className="h-[1px] w-full bg-orange-500/30 absolute top-1/2 -z-10"></div>
-                  <div className="bg-slate-800 border border-orange-500/50 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
-                    <span className="text-orange-400">REST API GET /weather</span>
-                    <ArrowRight className="w-4 h-4 text-orange-400" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 5: Data Returns */}
-              <div className="grid grid-cols-4 gap-4 items-center">
-                <div className="col-span-3 relative">
-                  <div className="h-[1px] w-full bg-blue-500/30 absolute top-1/2 -z-10"></div>
-                  <div className="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
-                    <ArrowRight className="w-4 h-4 text-blue-400 rotate-180" />
-                    <span className="font-mono text-slate-300">result: "72°F, Sunny"</span>
-                  </div>
-                </div>
-                <div>
-                   <div className="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center shadow-md flex justify-between items-center px-4">
-                    <ArrowRight className="w-4 h-4 text-slate-500 rotate-180" />
-                    <span className="text-slate-400">JSON</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Final Step */}
-              <div className="grid grid-cols-4 gap-4 items-center">
-                <div className="col-span-1">
-                   <div className="bg-blue-900/30 border border-blue-500/50 text-xs p-3 rounded text-center shadow-md">
-                    LLM Generates:<br/>
-                    <span className="text-blue-300">"It is currently 72°F and sunny in NY."</span>
-                  </div>
-                </div>
-                <div className="col-span-3"></div>
-              </div>
-
+          <!-- Data Source Box -->
+          <div class="flex flex-col items-center justify-center w-48 space-y-3">
+            <div class="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
+              <i data-lucide="database" class="w-5 h-5 text-orange-400 mr-3"></i>
+              <div class="text-xs font-bold text-white">Local Database</div>
+            </div>
+            <div class="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
+              <i data-lucide="globe" class="w-5 h-5 text-sky-400 mr-3"></i>
+              <div class="text-xs font-bold text-white">External API</div>
+            </div>
+            <div class="bg-slate-800 border border-slate-600 p-3 rounded-lg w-full flex items-center shadow-lg">
+              <i data-lucide="file-json" class="w-5 h-5 text-yellow-400 mr-3"></i>
+              <div class="text-xs font-bold text-white">Local Files</div>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
-
-
-const TransportSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2">Transport Layer</h2>
-      <p className="text-slate-400">
-        MCP uses JSON-RPC 2.0 as its wire format, but abstracts the transport mechanism to support both local execution and remote cloud connections.
-      </p>
-    </div>
-
-    <div className="mt-6 space-y-6">
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-        <h3 className="text-xl font-semibold text-white mb-2 flex items-center">
-          <Terminal className="w-5 h-5 mr-2 text-blue-400" />
-          1. Standard Input/Output (stdio)
-        </h3>
-        <p className="text-slate-300 text-sm mb-4">
-          The primary transport for local integrations. The AI Host spawns the MCP Server as a subprocess. Communication happens directly over `stdin` and `stdout`.
+        <p class="text-center text-xs text-slate-500 mt-8">
+          The MCP Client and Server handle all translation. The LLM only needs to understand standard JSON schemas.
         </p>
-        <ul className="list-disc pl-5 text-sm text-slate-400 space-y-1">
-          <li>Extremely fast and synchronous.</li>
-          <li>Inherently secure (no network ports opened).</li>
-          <li>Perfect for local file system access, local database querying, or local IDE integration.</li>
-        </ul>
       </div>
 
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-        <h3 className="text-xl font-semibold text-white mb-2 flex items-center">
-          <Network className="w-5 h-5 mr-2 text-emerald-400" />
-          2. Server-Sent Events (SSE) & HTTP POST
-        </h3>
-        <p className="text-slate-300 text-sm mb-4">
-          Used for remote or cloud-based MCP Servers. Because traditional HTTP is stateless, MCP splits the communication:
-        </p>
-        <ul className="list-disc pl-5 text-sm text-slate-400 space-y-1">
-          <li><strong>Server-to-Client:</strong> Pushes notifications, progress, and responses via a persistent SSE stream.</li>
-          <li><strong>Client-to-Server:</strong> Sends JSON-RPC requests via standard HTTP POST endpoints.</li>
-        </ul>
+      <!-- Technical Diagram -->
+      <div id="diag-technical" class="bg-slate-900 border border-slate-700 p-6 rounded-xl overflow-x-auto shadow-2xl hidden">
+        <div class="min-w-[700px]">
+          <!-- Table Headers -->
+          <div class="grid grid-cols-4 gap-4 mb-4 text-center border-b border-slate-700 pb-4">
+            <div class="font-bold text-blue-400 text-sm">AI Host (LLM Context)</div>
+            <div class="font-bold text-purple-400 text-sm">MCP Client</div>
+            <div class="font-bold text-emerald-400 text-sm">MCP Server</div>
+            <div class="font-bold text-orange-400 text-sm">Backend System</div>
+          </div>
+
+          <!-- Sequence Steps -->
+          <div class="space-y-6 relative">
+            <!-- Step 1 -->
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <div></div>
+              <div class="col-span-2 relative">
+                <div class="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
+                <div class="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md">
+                  <span class="font-mono text-emerald-400">initialize()</span> request
+                </div>
+              </div>
+              <div></div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <div class="col-span-2 relative">
+                <div class="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
+                <div class="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 rotate-180"></i>
+                  <span class="text-slate-300">Inject Tools into Context</span>
+                </div>
+              </div>
+              <div class="col-span-1 relative">
+                 <div class="h-[1px] w-full bg-slate-600 absolute top-1/2 -z-10"></div>
+                 <div class="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center shadow-md flex justify-between items-center px-2">
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-emerald-400 rotate-180"></i>
+                  <span class="font-mono text-emerald-400">tools/list</span>
+                </div>
+              </div>
+              <div></div>
+            </div>
+
+            <!-- Spacer -->
+            <div class="h-4 border-b border-dashed border-slate-700 mx-10 text-center relative text-xs text-slate-500 mt-4 mb-4">
+              <span class="bg-slate-900 px-2 absolute -top-2 left-1/2 transform -translate-x-1/2">User asks a question</span>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="grid grid-cols-4 gap-4 items-center mt-8">
+              <div class="col-span-1">
+                 <div class="bg-blue-900/30 border border-blue-500/50 text-xs p-3 rounded text-center shadow-md">
+                  LLM predicts:<br/>
+                  <code class="text-blue-300">call_tool("get_weather")</code>
+                </div>
+              </div>
+              <div class="col-span-2 relative">
+                <div class="h-[1px] w-full bg-emerald-500/30 absolute top-1/2 -z-10"></div>
+                <div class="bg-slate-800 border border-emerald-500/50 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
+                  <span class="font-mono text-emerald-400">tools/call {"city": "NY"}</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+              </div>
+              <div></div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <div></div>
+              <div></div>
+              <div class="col-span-2 relative">
+                <div class="h-[1px] w-full bg-orange-500/30 absolute top-1/2 -z-10"></div>
+                <div class="bg-slate-800 border border-orange-500/50 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
+                  <span class="text-orange-400">REST API GET /weather</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-orange-400"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <div class="col-span-3 relative">
+                <div class="h-[1px] w-full bg-blue-500/30 absolute top-1/2 -z-10"></div>
+                <div class="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center mx-8 shadow-md flex justify-between items-center px-4">
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 rotate-180"></i>
+                  <span class="font-mono text-slate-300">result: "72°F, Sunny"</span>
+                </div>
+              </div>
+              <div>
+                 <div class="bg-slate-800 border border-slate-700 text-xs p-2 rounded text-center shadow-md flex justify-between items-center px-4">
+                  <i data-lucide="arrow-right" class="w-4 h-4 text-slate-500 rotate-180"></i>
+                  <span class="text-slate-400">JSON</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Final Step -->
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <div class="col-span-1">
+                 <div class="bg-blue-900/30 border border-blue-500/50 text-xs p-3 rounded text-center shadow-md">
+                  LLM Generates:<br/>
+                  <span class="text-blue-300">"It is currently 72°F and sunny in NY."</span>
+                </div>
+              </div>
+              <div class="col-span-3"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
 
-const PrimitivesSection = () => {
-  const [activeTab, setActiveTab] = useState('resources');
-  
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <!-- SECTION: Transport Layer -->
+    <div id="sec-transport" class="hidden space-y-6 fade-in-slide content-section">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Server Primitives</h2>
-        <p className="text-slate-400">
+        <h2 class="text-2xl font-bold text-white mb-2">Transport Layer</h2>
+        <p class="text-slate-400">
+          MCP uses JSON-RPC 2.0 as its wire format, but abstracts the transport mechanism to support both local execution and remote cloud connections.
+        </p>
+      </div>
+
+      <div class="mt-6 space-y-6">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h3 class="text-xl font-semibold text-white mb-2 flex items-center">
+            <i data-lucide="terminal" class="w-5 h-5 mr-2 text-blue-400"></i>
+            1. Standard Input/Output (stdio)
+          </h3>
+          <p class="text-slate-300 text-sm mb-4">
+            The primary transport for local integrations. The AI Host spawns the MCP Server as a subprocess. Communication happens directly over `stdin` and `stdout`.
+          </p>
+          <ul class="list-disc pl-5 text-sm text-slate-400 space-y-1">
+            <li>Extremely fast and synchronous.</li>
+            <li>Inherently secure (no network ports opened).</li>
+            <li>Perfect for local file system access, local database querying, or local IDE integration.</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h3 class="text-xl font-semibold text-white mb-2 flex items-center">
+            <i data-lucide="network" class="w-5 h-5 mr-2 text-emerald-400"></i>
+            2. Server-Sent Events (SSE) & HTTP POST
+          </h3>
+          <p class="text-slate-300 text-sm mb-4">
+            Used for remote or cloud-based MCP Servers. Because traditional HTTP is stateless, MCP splits the communication:
+          </p>
+          <ul class="list-disc pl-5 text-sm text-slate-400 space-y-1">
+            <li><strong>Server-to-Client:</strong> Pushes notifications, progress, and responses via a persistent SSE stream.</li>
+            <li><strong>Client-to-Server:</strong> Sends JSON-RPC requests via standard HTTP POST endpoints.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: Server Primitives -->
+    <div id="sec-primitives" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">Server Primitives</h2>
+        <p class="text-slate-400">
           Servers expose their capabilities using three core building blocks. This is the API surface that the LLM interacts with.
         </p>
       </div>
 
-      <div className="flex space-x-2 border-b border-slate-700 mb-6">
-        {['resources', 'tools', 'prompts'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-              activeTab === tab 
-                ? 'border-blue-500 text-blue-400' 
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      <div class="flex space-x-2 border-b border-slate-700 mb-6">
+        <button onclick="switchPrimitive('resources')" id="btn-prim-resources" class="px-4 py-2 text-sm font-medium transition-colors border-b-2 border-blue-500 text-blue-400">Resources</button>
+        <button onclick="switchPrimitive('tools')" id="btn-prim-tools" class="px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-200">Tools</button>
+        <button onclick="switchPrimitive('prompts')" id="btn-prim-prompts" class="px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-200">Prompts</button>
       </div>
 
-      {activeTab === 'resources' && (
-        <div className="space-y-4 animate-in fade-in">
-          <h3 className="text-xl font-semibold text-white">Resources (Read-Only Data)</h3>
-          <p className="text-slate-300">
-            Resources are static or dynamic data endpoints addressed by URIs. They allow the LLM to "read" context without mutating state. Examples include log files, database schemas, or API documentation.
-          </p>
-          <CodeBlock 
-            title="Resource List Schema Response"
-            language="json"
-            code={`{
+      <div id="prim-resources" class="space-y-4 fade-in-slide block primitive-content">
+        <h3 class="text-xl font-semibold text-white">Resources (Read-Only Data)</h3>
+        <p class="text-slate-300">
+          Resources are static or dynamic data endpoints addressed by URIs. They allow the LLM to "read" context without mutating state. Examples include log files, database schemas, or API documentation.
+        </p>
+        <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+          <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+            <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Resource List Schema Response
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <pre class="text-sm font-mono text-slate-300"><code>{
   "resources": [
     {
       "uri": "postgres://schema/public/users",
@@ -470,21 +454,22 @@ const PrimitivesSection = () => {
       "mimeType": "application/json"
     }
   ]
-}`}
-          />
+}</code></pre>
+          </div>
         </div>
-      )}
+      </div>
 
-      {activeTab === 'tools' && (
-        <div className="space-y-4 animate-in fade-in">
-          <h3 className="text-xl font-semibold text-white">Tools (Executable Actions)</h3>
-          <p className="text-slate-300">
-            Tools allow the AI to take action or fetch dynamic parameterized data. The server defines the tool and provides a strict JSON Schema for the inputs it requires. The LLM predicts arguments matching this schema.
-          </p>
-          <CodeBlock 
-            title="Tool Definition Schema"
-            language="json"
-            code={`{
+      <div id="prim-tools" class="space-y-4 fade-in-slide hidden primitive-content">
+        <h3 class="text-xl font-semibold text-white">Tools (Executable Actions)</h3>
+        <p class="text-slate-300">
+          Tools allow the AI to take action or fetch dynamic parameterized data. The server defines the tool and provides a strict JSON Schema for the inputs it requires. The LLM predicts arguments matching this schema.
+        </p>
+        <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+          <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+            <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Tool Definition Schema
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <pre class="text-sm font-mono text-slate-300"><code>{
   "tools": [
     {
       "name": "create_jira_ticket",
@@ -499,21 +484,22 @@ const PrimitivesSection = () => {
       }
     }
   ]
-}`}
-          />
+}</code></pre>
+          </div>
         </div>
-      )}
+      </div>
 
-      {activeTab === 'prompts' && (
-        <div className="space-y-4 animate-in fade-in">
-          <h3 className="text-xl font-semibold text-white">Prompts (Templated Workflows)</h3>
-          <p className="text-slate-300">
-            Pre-defined prompt templates hosted by the server. Instead of users writing complex instructions, the server can supply the exact prompt needed to handle its specific domain, complete with variable arguments.
-          </p>
-          <CodeBlock 
-            title="Prompt Definition Schema"
-            language="json"
-            code={`{
+      <div id="prim-prompts" class="space-y-4 fade-in-slide hidden primitive-content">
+        <h3 class="text-xl font-semibold text-white">Prompts (Templated Workflows)</h3>
+        <p class="text-slate-300">
+          Pre-defined prompt templates hosted by the server. Instead of users writing complex instructions, the server can supply the exact prompt needed to handle its specific domain, complete with variable arguments.
+        </p>
+        <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+          <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+            <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Prompt Definition Schema
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <pre class="text-sm font-mono text-slate-300"><code>{
   "prompts": [
     {
       "name": "analyze_code_review",
@@ -527,99 +513,99 @@ const PrimitivesSection = () => {
       ]
     }
   ]
-}`}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ClientCapabilitiesSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2">Client Capabilities</h2>
-      <p className="text-slate-400">
-        In traditional APIs, the client only makes requests. In MCP, the Server can request powerful capabilities <strong>from the Client (the LLM Host)</strong>.
-      </p>
-    </div>
-
-    <div className="grid gap-6 mt-6">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-800/50 p-6 rounded-xl border border-slate-700">
-        <h3 className="text-xl font-semibold text-blue-400 mb-3">1. Sampling (The Agentic Loop)</h3>
-        <p className="text-slate-300 text-sm mb-4">
-          Allows an MCP server to request an LLM completion from the client. This enables servers to utilize AI for intermediate processing before returning data to the main user context.
-        </p>
-        <div className="bg-slate-900 p-4 rounded-lg text-sm text-slate-400">
-          <strong>Use Case:</strong> A "News Aggregator" server fetches 5 articles. Before returning them, it calls <code>client.sample()</code> to ask the LLM to summarize the 5 articles into a single bias-free paragraph. The server then returns only the summary as the Resource.
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-r from-slate-800 to-slate-800/50 p-6 rounded-xl border border-slate-700">
-        <h3 className="text-xl font-semibold text-emerald-400 mb-3">2. Roots</h3>
-        <p className="text-slate-300 text-sm mb-4">
-          Defines the spatial boundaries of what the server is allowed to access. The server queries the client to ask, "Where am I allowed to operate?"
-        </p>
-        <div className="bg-slate-900 p-4 rounded-lg text-sm text-slate-400">
-          <strong>Use Case:</strong> A local filesystem server needs to know which folder the user has currently opened in their IDE (Host). It requests roots, and the client responds with <code>file:///Users/dev/my_project</code>. The server restricts read/write operations to this directory.
+}</code></pre>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
 
-// --- NEW ADVANCED MECHANICS SECTION ---
-const AdvancedMechanicsSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2 flex items-center">
-        <Layers className="w-6 h-6 mr-3 text-indigo-400" />
-        Advanced Protocol Mechanics
-      </h2>
-      <p className="text-slate-400">
-        To build robust, production-ready AI integrations, the protocol includes several advanced mechanics to handle large data, multimedia, and debugging.
-      </p>
+    <!-- SECTION: Client Capabilities -->
+    <div id="sec-client" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">Client Capabilities</h2>
+        <p class="text-slate-400">
+          In traditional APIs, the client only makes requests. In MCP, the Server can request powerful capabilities <strong>from the Client (the LLM Host)</strong>.
+        </p>
+      </div>
+
+      <div class="grid gap-6 mt-6">
+        <div class="bg-gradient-to-r from-slate-800 to-slate-800/50 p-6 rounded-xl border border-slate-700">
+          <h3 class="text-xl font-semibold text-blue-400 mb-3">1. Sampling (The Agentic Loop)</h3>
+          <p class="text-slate-300 text-sm mb-4">
+            Allows an MCP server to request an LLM completion from the client. This enables servers to utilize AI for intermediate processing before returning data to the main user context.
+          </p>
+          <div class="bg-slate-900 p-4 rounded-lg text-sm text-slate-400">
+            <strong>Use Case:</strong> A "News Aggregator" server fetches 5 articles. Before returning them, it calls <code>client.sample()</code> to ask the LLM to summarize the 5 articles into a single bias-free paragraph. The server then returns only the summary as the Resource.
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-slate-800 to-slate-800/50 p-6 rounded-xl border border-slate-700">
+          <h3 class="text-xl font-semibold text-emerald-400 mb-3">2. Roots</h3>
+          <p class="text-slate-300 text-sm mb-4">
+            Defines the spatial boundaries of what the server is allowed to access. The server queries the client to ask, "Where am I allowed to operate?"
+          </p>
+          <div class="bg-slate-900 p-4 rounded-lg text-sm text-slate-400">
+            <strong>Use Case:</strong> A local filesystem server needs to know which folder the user has currently opened in their IDE (Host). It requests roots, and the client responds with <code>file:///Users/dev/my_project</code>. The server restricts read/write operations to this directory.
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div className="grid gap-6 mt-6">
-      
-      {/* Pagination */}
-      <div className="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-        <div className="flex items-center mb-3 text-blue-400">
-          <ListOrdered className="w-5 h-5 mr-2" />
-          <h3 className="text-lg font-semibold">1. Pagination (Cursor Management)</h3>
-        </div>
-        <p className="text-slate-300 text-sm mb-4">
-          When an MCP Server exposes thousands of tools or resources, it cannot return them all at once without overwhelming the client. The protocol supports native pagination using <code>cursor</code> and <code>nextCursor</code>.
+    <!-- SECTION: Advanced Mechanics -->
+    <div id="sec-advanced" class="hidden space-y-6 fade-in-slide content-section block"> <!-- Default open tab based on React state -->
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
+          <i data-lucide="layers" class="w-6 h-6 mr-3 text-indigo-400"></i>
+          Advanced Protocol Mechanics
+        </h2>
+        <p class="text-slate-400">
+          To build robust, production-ready AI integrations, the protocol includes several advanced mechanics to handle large data, multimedia, and debugging.
         </p>
-        <CodeBlock 
-          title="Paginated Response (Resources)"
-          language="json"
-          code={`{
+      </div>
+
+      <div class="grid gap-6 mt-6">
+        <!-- Pagination -->
+        <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
+          <div class="flex items-center mb-3 text-blue-400">
+            <i data-lucide="list-ordered" class="w-5 h-5 mr-2"></i>
+            <h3 class="text-lg font-semibold">1. Pagination (Cursor Management)</h3>
+          </div>
+          <p class="text-slate-300 text-sm mb-4">
+            When an MCP Server exposes thousands of tools or resources, it cannot return them all at once without overwhelming the client. The protocol supports native pagination using <code>cursor</code> and <code>nextCursor</code>.
+          </p>
+          <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+            <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+              <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Paginated Response (Resources)
+            </div>
+            <div class="p-4 overflow-x-auto">
+              <pre class="text-sm font-mono text-slate-300"><code>{
   "jsonrpc": "2.0",
   "id": 2,
   "result": {
     "resources": [ /* ... first 50 items ... */ ],
     "nextCursor": "eyJwYWdlIjoyfQ==" 
   }
-}`}
-        />
-        <p className="text-xs text-slate-400 mt-2">The client will pass this base64 cursor back in the next request to fetch page 2.</p>
-      </div>
-
-      {/* Logging */}
-      <div className="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-        <div className="flex items-center mb-3 text-emerald-400">
-          <Terminal className="w-5 h-5 mr-2" />
-          <h3 className="text-lg font-semibold">2. Standardized Server Logging</h3>
+}</code></pre>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2">The client will pass this base64 cursor back in the next request to fetch page 2.</p>
         </div>
-        <p className="text-slate-300 text-sm mb-4">
-          Because MCP Servers often run as invisible subprocesses (via <code>stdio</code>), standard print statements get lost. MCP provides a dedicated notification endpoint for servers to stream logs (Info, Debug, Error) back to the Host's debugging UI.
-        </p>
-        <CodeBlock 
-          title="Server Log Event"
-          language="json"
-          code={`{
+
+        <!-- Logging -->
+        <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
+          <div class="flex items-center mb-3 text-emerald-400">
+            <i data-lucide="terminal" class="w-5 h-5 mr-2"></i>
+            <h3 class="text-lg font-semibold">2. Standardized Server Logging</h3>
+          </div>
+          <p class="text-slate-300 text-sm mb-4">
+            Because MCP Servers often run as invisible subprocesses (via <code>stdio</code>), standard print statements get lost. MCP provides a dedicated notification endpoint for servers to stream logs (Info, Debug, Error) back to the Host's debugging UI.
+          </p>
+          <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+            <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+              <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Server Log Event
+            </div>
+            <div class="p-4 overflow-x-auto">
+              <pre class="text-sm font-mono text-slate-300"><code>{
   "jsonrpc": "2.0",
   "method": "notifications/message/log",
   "params": {
@@ -627,23 +613,26 @@ const AdvancedMechanicsSection = () => (
     "logger": "database_connector",
     "data": "Failed to connect to Postgres on port 5432."
   }
-}`}
-        />
-      </div>
-
-      {/* Multi-modal Content */}
-      <div className="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-        <div className="flex items-center mb-3 text-purple-400">
-          <ImageIcon className="w-5 h-5 mr-2" />
-          <h3 className="text-lg font-semibold">3. Multi-modal Content (Images)</h3>
+}</code></pre>
+            </div>
+          </div>
         </div>
-        <p className="text-slate-300 text-sm mb-4">
-          Tools and Resources are not limited to text. The `content` array returned by a tool can mix text with base64-encoded binary image data, allowing AI to analyze generated charts, screenshots, or diagrams.
-        </p>
-        <CodeBlock 
-          title="Tool Response with Image"
-          language="json"
-          code={`{
+
+        <!-- Multi-modal Content -->
+        <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
+          <div class="flex items-center mb-3 text-purple-400">
+            <i data-lucide="image" class="w-5 h-5 mr-2"></i>
+            <h3 class="text-lg font-semibold">3. Multi-modal Content (Images)</h3>
+          </div>
+          <p class="text-slate-300 text-sm mb-4">
+            Tools and Resources are not limited to text. The `content` array returned by a tool can mix text with base64-encoded binary image data, allowing AI to analyze generated charts, screenshots, or diagrams.
+          </p>
+          <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+            <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+              <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> Tool Response with Image
+            </div>
+            <div class="p-4 overflow-x-auto">
+              <pre class="text-sm font-mono text-slate-300"><code>{
   "result": {
     "content": [
       {
@@ -657,93 +646,93 @@ const AdvancedMechanicsSection = () => (
       }
     ]
   }
-}`}
-        />
-      </div>
-
-      {/* Ping Keep-Alive */}
-      <div className="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-        <div className="flex items-center mb-3 text-orange-400">
-          <Radio className="w-5 h-5 mr-2" />
-          <h3 className="text-lg font-semibold">4. Connection Liveness (Ping)</h3>
+}</code></pre>
+            </div>
+          </div>
         </div>
-        <p className="text-slate-300 text-sm mb-2">
-          Especially for SSE/HTTP connections, either the client or the server can issue a standard <code>ping</code> request. The recipient must immediately respond with an empty result object to prove the connection is still alive.
+
+        <!-- Ping Keep-Alive -->
+        <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
+          <div class="flex items-center mb-3 text-orange-400">
+            <i data-lucide="radio" class="w-5 h-5 mr-2"></i>
+            <h3 class="text-lg font-semibold">4. Connection Liveness (Ping)</h3>
+          </div>
+          <p class="text-slate-300 text-sm mb-2">
+            Especially for SSE/HTTP connections, either the client or the server can issue a standard <code>ping</code> request. The recipient must immediately respond with an empty result object to prove the connection is still alive.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: State & Lifecycle -->
+    <div id="sec-lifecycle" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">State & Lifecycle</h2>
+        <p class="text-slate-400 mb-6">
+          MCP is stateful. Connections follow a strict handshake and lifecycle pattern to ensure capabilities are mutually understood.
         </p>
       </div>
 
-    </div>
-  </div>
-);
-
-const LifecycleSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2">State & Lifecycle</h2>
-      <p className="text-slate-400 mb-6">
-        MCP is stateful. Connections follow a strict handshake and lifecycle pattern to ensure capabilities are mutually understood.
-      </p>
-    </div>
-
-    <div className="relative border-l border-slate-700 ml-4 space-y-8 pb-8">
-      
-      <div className="relative">
-        <div className="absolute -left-6 top-1 bg-blue-500 w-4 h-4 rounded-full border-4 border-slate-950 flex items-center justify-center">
-          <div className="w-1 h-1 bg-white rounded-full"></div>
+      <div class="relative border-l border-slate-700 ml-4 space-y-8 pb-8">
+        
+        <div class="relative">
+          <div class="absolute -left-6 top-1 bg-blue-500 w-4 h-4 rounded-full border-4 border-slate-950 flex items-center justify-center">
+            <div class="w-1 h-1 bg-white rounded-full"></div>
+          </div>
+          <div class="pl-4">
+            <h3 class="text-lg font-bold text-white">1. Initialization</h3>
+            <p class="text-slate-400 text-sm mt-1">
+              Client sends <code>initialize</code> containing its capabilities (Roots, Sampling) and client info. 
+              Server responds with its protocol version and capabilities (Tools, Resources, Prompts).
+            </p>
+          </div>
         </div>
-        <div className="pl-4">
-          <h3 className="text-lg font-bold text-white">1. Initialization</h3>
-          <p className="text-slate-400 text-sm mt-1">
-            Client sends <code>initialize</code> containing its capabilities (Roots, Sampling) and client info. 
-            Server responds with its protocol version and capabilities (Tools, Resources, Prompts).
-          </p>
-        </div>
-      </div>
 
-      <div className="relative">
-        <div className="absolute -left-6 top-1 bg-purple-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
-        <div className="pl-4">
-          <h3 className="text-lg font-bold text-white">2. Notification</h3>
-          <p className="text-slate-400 text-sm mt-1">
-            Client sends an <code>notifications/initialized</code> event. This confirms the handshake is complete and the connection is ready.
-          </p>
+        <div class="relative">
+          <div class="absolute -left-6 top-1 bg-purple-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
+          <div class="pl-4">
+            <h3 class="text-lg font-bold text-white">2. Notification</h3>
+            <p class="text-slate-400 text-sm mt-1">
+              Client sends an <code>notifications/initialized</code> event. This confirms the handshake is complete and the connection is ready.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="relative">
-        <div className="absolute -left-6 top-1 bg-emerald-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
-        <div className="pl-4">
-          <h3 className="text-lg font-bold text-white">3. Execution (Standard Operation)</h3>
-          <p className="text-slate-400 text-sm mt-1">
-            Bi-directional flow. Client sends <code>tools/call</code>, server sends <code>notifications/progress</code>, server requests <code>sampling/createMessage</code>.
-          </p>
+        <div class="relative">
+          <div class="absolute -left-6 top-1 bg-emerald-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
+          <div class="pl-4">
+            <h3 class="text-lg font-bold text-white">3. Execution (Standard Operation)</h3>
+            <p class="text-slate-400 text-sm mt-1">
+              Bi-directional flow. Client sends <code>tools/call</code>, server sends <code>notifications/progress</code>, server requests <code>sampling/createMessage</code>.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="relative">
-        <div className="absolute -left-6 top-1 bg-red-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
-        <div className="pl-4">
-          <h3 className="text-lg font-bold text-white">4. Shutdown</h3>
-          <p className="text-slate-400 text-sm mt-1">Client sends <code>shutdown</code> request. Server begins graceful termination, cleans up resources, and closes the stdio/SSE stream.</p>
+        <div class="relative">
+          <div class="absolute -left-6 top-1 bg-red-500 w-4 h-4 rounded-full border-4 border-slate-950"></div>
+          <div class="pl-4">
+            <h3 class="text-lg font-bold text-white">4. Shutdown</h3>
+            <p class="text-slate-400 text-sm mt-1">Client sends <code>shutdown</code> request. Server begins graceful termination, cleans up resources, and closes the stdio/SSE stream.</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
 
-const SampleSection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2">Practical Sample: Python FastMCP</h2>
-      <p className="text-slate-400">
-        While you can build an MCP server by handling raw JSON-RPC, SDKs like <code>FastMCP</code> abstract the complexity. By simply writing python functions with type-hints, the SDK auto-generates the required JSON Schemas for the LLM.
-      </p>
-    </div>
+    <!-- SECTION: Practical Samples -->
+    <div id="sec-sample" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">Practical Sample: Python FastMCP</h2>
+        <p class="text-slate-400">
+          While you can build an MCP server by handling raw JSON-RPC, SDKs like <code>FastMCP</code> abstract the complexity. By simply writing python functions with type-hints, the SDK auto-generates the required JSON Schemas for the LLM.
+        </p>
+      </div>
 
-    <CodeBlock 
-      title="weather_server.py"
-      language="python"
-      code={`from mcp.server.fastmcp import FastMCP
+      <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+        <div class="bg-slate-800 px-4 py-2 text-xs text-slate-400 font-mono flex items-center border-b border-slate-700">
+          <i data-lucide="file-json" class="w-4 h-4 mr-2"></i> weather_server.py
+        </div>
+        <div class="p-4 overflow-x-auto">
+          <pre class="text-sm font-mono text-slate-300"><code>from mcp.server.fastmcp import FastMCP
 import httpx
 
 # 1. Initialize the Server Instance
@@ -774,14 +763,24 @@ async def get_weather(city: str, metric: bool = True) -> str:
 if __name__ == "__main__":
     # 3. Run the server using stdio (default)
     # The AI Host (like Claude Desktop) will execute this script
-    mcp.run()`}
-    />
+    mcp.run()</code></pre>
+        </div>
+      </div>
 
-    <DeepDive title="How the LLM sees this">
-      <p className="mb-4">When connected, the Host extracts the schema and passes this to the LLM's system prompt invisibly:</p>
-      <CodeBlock 
-        language="json"
-        code={`{
+      <!-- Deep Dive Accordion -->
+      <div class="mt-4 border border-blue-900/50 rounded-lg bg-blue-900/10 overflow-hidden">
+        <button onclick="toggleDeepDive(this)" class="w-full px-4 py-3 flex items-center justify-between text-blue-400 hover:bg-blue-900/20 transition-colors">
+          <span class="font-semibold flex items-center text-sm">
+            <i data-lucide="info" class="w-4 h-4 mr-2"></i>
+            Nth Level Deep Dive: How the LLM sees this
+          </span>
+          <i data-lucide="chevron-right" class="w-4 h-4 chevron-icon"></i>
+        </button>
+        <div class="p-4 text-slate-300 text-sm border-t border-blue-900/50 space-y-4 deep-dive-content">
+          <p class="mb-4">When connected, the Host extracts the schema and passes this to the LLM's system prompt invisibly:</p>
+          <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 my-4 shadow-lg">
+            <div class="p-4 overflow-x-auto">
+              <pre class="text-sm font-mono text-slate-300"><code>{
   "name": "get_weather",
   "description": "Fetches the current weather for a specified city.",
   "inputSchema": {
@@ -792,120 +791,130 @@ if __name__ == "__main__":
     },
     "required": ["city"]
   }
-}`}
-      />
-    </DeepDive>
-  </div>
-);
-
-const SecuritySection = () => (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-2 flex items-center">
-        <Shield className="w-8 h-8 mr-3 text-red-400" />
-        Security & Trust
-      </h2>
-      <p className="text-slate-400">
-        Bridging autonomous LLMs with enterprise databases and local filesystems carries immense risk. MCP handles this at the protocol level.
-      </p>
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div className="grid md:grid-cols-2 gap-6 mt-6">
-      <div className="bg-slate-800/50 p-6 rounded-xl border border-red-900/50">
-        <div className="flex items-center mb-3">
-          <Lock className="w-5 h-5 text-red-400 mr-2" />
-          <h3 className="text-lg font-semibold text-white">Process Isolation</h3>
-        </div>
-        <p className="text-slate-300 text-sm">
-          MCP servers run as isolated processes. A GitHub MCP server has no inherent access to a local filesystem unless explicitly granted by the Host. If an LLM is hijacked via prompt injection, the blast radius is strictly limited to the specific tools exposed by the active MCP server.
+    <!-- SECTION: Security & Trust -->
+    <div id="sec-security" class="hidden space-y-6 fade-in-slide content-section">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
+          <i data-lucide="shield" class="w-8 h-8 mr-3 text-red-400"></i>
+          Security & Trust
+        </h2>
+        <p class="text-slate-400">
+          Bridging autonomous LLMs with enterprise databases and local filesystems carries immense risk. MCP handles this at the protocol level.
         </p>
       </div>
 
-      <div className="bg-slate-800/50 p-6 rounded-xl border border-orange-900/50">
-        <div className="flex items-center mb-3">
-          <CheckCircle2 className="w-5 h-5 text-orange-400 mr-2" />
-          <h3 className="text-lg font-semibold text-white">Human-in-the-Loop</h3>
+      <div class="grid md:grid-cols-2 gap-6 mt-6">
+        <div class="bg-slate-800/50 p-6 rounded-xl border border-red-900/50">
+          <div class="flex items-center mb-3">
+            <i data-lucide="lock" class="w-5 h-5 text-red-400 mr-2"></i>
+            <h3 class="text-lg font-semibold text-white">Process Isolation</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            MCP servers run as isolated processes. A GitHub MCP server has no inherent access to a local filesystem unless explicitly granted by the Host. If an LLM is hijacked via prompt injection, the blast radius is strictly limited to the specific tools exposed by the active MCP server.
+          </p>
         </div>
-        <p className="text-slate-300 text-sm">
-          MCP formally distinguishes between <strong>Safe</strong> tools (read-only) and <strong>State-Changing</strong> tools (e.g., executing SQL, sending emails). Client Hosts are required by design patterns to intercept state-changing tool executions and present a confirmation dialog to the human user before sending the JSON-RPC request.
-        </p>
+
+        <div class="bg-slate-800/50 p-6 rounded-xl border border-orange-900/50">
+          <div class="flex items-center mb-3">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-orange-400 mr-2"></i>
+            <h3 class="text-lg font-semibold text-white">Human-in-the-Loop</h3>
+          </div>
+          <p class="text-slate-300 text-sm">
+            MCP formally distinguishes between <strong>Safe</strong> tools (read-only) and <strong>State-Changing</strong> tools (e.g., executing SQL, sending emails). Client Hosts are required by design patterns to intercept state-changing tool executions and present a confirmation dialog to the human user before sending the JSON-RPC request.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  </main>
 
-// --- Main App ---
+  <!-- Interactive Logic -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('advanced'); // Defaulting to show the new content
+    // Setup initial state (defaults to 'advanced' just like the React app)
+    const TABS = ['arch', 'diagrams', 'transport', 'primitives', 'client', 'advanced', 'lifecycle', 'sample', 'security'];
+    const PRIMITIVES = ['resources', 'tools', 'prompts'];
+    const DIAGRAMS = ['logical', 'technical'];
 
-  const tabs = [
-    { id: 'arch', title: 'High-Level Architecture', icon: Server },
-    { id: 'diagrams', title: 'Interactive Diagrams', icon: GitMerge },
-    { id: 'transport', title: 'Transport Layer', icon: Network },
-    { id: 'primitives', title: 'Server Primitives', icon: Wrench },
-    { id: 'client', title: 'Client Capabilities', icon: Zap },
-    { id: 'advanced', title: 'Advanced Mechanics', icon: Layers }, // NEW TAB
-    { id: 'lifecycle', title: 'State & Lifecycle', icon: Activity },
-    { id: 'sample', title: 'Practical Samples', icon: Code },
-    { id: 'security', title: 'Security & Trust', icon: Shield },
-  ];
+    function switchTab(tabId) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('block');
+      });
+      // Show targeted section
+      const targetSec = document.getElementById(`sec-${tabId}`);
+      if(targetSec) {
+        targetSec.classList.remove('hidden');
+        targetSec.classList.add('block');
+      }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'arch': return <ArchitectureSection />;
-      case 'diagrams': return <DiagramSection />;
-      case 'transport': return <TransportSection />;
-      case 'primitives': return <PrimitivesSection />;
-      case 'client': return <ClientCapabilitiesSection />;
-      case 'advanced': return <AdvancedMechanicsSection />; // NEW CONTENT
-      case 'lifecycle': return <LifecycleSection />;
-      case 'sample': return <SampleSection />;
-      case 'security': return <SecuritySection />;
-      default: return <ArchitectureSection />;
+      // Update button styles
+      TABS.forEach(id => {
+        const btn = document.getElementById(`btn-${id}`);
+        const icon = btn.querySelector('.icon-nav');
+        if (id === tabId) {
+          btn.className = "w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 bg-blue-500/10 text-blue-400 font-semibold shadow-[inset_2px_0_0_0_#3b82f6]";
+          icon.classList.remove('text-slate-500');
+          icon.classList.add('text-blue-400');
+        } else {
+          btn.className = "w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+          icon.classList.remove('text-blue-400');
+          icon.classList.add('text-slate-500');
+        }
+      });
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col md:flex-row font-sans selection:bg-blue-500/30">
+    function switchDiagram(diagramType) {
+      DIAGRAMS.forEach(id => {
+        const el = document.getElementById(`diag-${id}`);
+        const btn = document.getElementById(`btn-diag-${id}`);
+        if (id === diagramType) {
+          el.classList.remove('hidden');
+          el.classList.add('block');
+          btn.className = "px-4 py-2 text-sm font-medium transition-colors border-b-2 border-blue-500 text-blue-400";
+        } else {
+          el.classList.remove('block');
+          el.classList.add('hidden');
+          btn.className = "px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-200";
+        }
+      });
+    }
+
+    function switchPrimitive(primId) {
+      PRIMITIVES.forEach(id => {
+        const el = document.getElementById(`prim-${id}`);
+        const btn = document.getElementById(`btn-prim-${id}`);
+        if (id === primId) {
+          el.classList.remove('hidden');
+          el.classList.add('block');
+          btn.className = "px-4 py-2 text-sm font-medium transition-colors border-b-2 border-blue-500 text-blue-400";
+        } else {
+          el.classList.remove('block');
+          el.classList.add('hidden');
+          btn.className = "px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-200";
+        }
+      });
+    }
+
+    function toggleDeepDive(buttonElement) {
+      const content = buttonElement.nextElementSibling;
+      const icon = buttonElement.querySelector('.chevron-icon');
       
-      {/* Sidebar Navigation */}
-      <aside className="w-full md:w-72 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent flex items-center">
-            <Cpu className="w-6 h-6 mr-2 text-blue-400" />
-            MCP Explorer
-          </h1>
-          <p className="text-xs text-slate-500 mt-2">Model Context Protocol Guide</p>
-        </div>
-        
-        <nav className="p-4 flex-1 overflow-y-auto space-y-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-blue-500/10 text-blue-400 font-semibold shadow-[inset_2px_0_0_0_#3b82f6]' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-              >
-                <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
-                {tab.title}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+      content.classList.toggle('open');
+      icon.classList.toggle('open');
+    }
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto max-w-5xl">
-        {renderContent()}
-      </main>
-
-    </div>
-  );
-}
+    // Call default setup
+    switchTab('advanced');
+  </script>
+</body>
+</html>
